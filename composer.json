@@ -1,0 +1,39 @@
+{
+  "name": "medlib/marcxml",
+  "description": "Medlib is a searche Library",
+  "keywords": ["z3950", "yaz", "marc21", "xml", "search books", "library"],
+  "license": "MIT",
+  "type": "library",
+  "homepage": "http://www.medlib.fr",
+  "Helpers": {
+    "issues": "https://github.com//medlib-v2/yaz/issues",
+    "source": "https://github.com//medlib-v2/yaz"
+  },
+  "authors": [
+    {
+      "name": "Medlib Team",
+      "email": "noreply-medlib@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.5.9",
+    "nesbot/Carbon": "1.*",
+    "danmichaelo/quitesimplexmlelement": "~0.2.4",
+    "illuminate/support": "~4.1|~5.0"
+
+  },
+  "replace": {
+    "medlib/marcxml": "self.version"
+
+  },
+  "require-dev": {
+    "phpunit/phpunit": "3.7.*",
+    "satooshi/php-coveralls": "~0.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "Medlib\\MarcXML\\": ""
+    }
+  },
+  "minimum-stability": "dev"
+}
