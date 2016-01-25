@@ -12,9 +12,7 @@ use Danmichaelo\QuiteSimpleXmlElement\QuiteSimpleXmlElement;
 
 class Parser
 {
-    public function __construct()
-    {
-    }
+    public function __construct(){}
 
     /**
      * @param QuiteSimpleXmlElement|SimpleXmlElement $record
@@ -32,6 +30,8 @@ class Parser
         $leader = $record->text('marc:leader');
 
         //99999 ai a22999997c 4500
+        //00744nam a22002053n 450 bnf
+        //00358nam a22000971  4500 sudoc
 
         $recordType = substr($leader, 6, 1);
 
@@ -50,7 +50,7 @@ class Parser
             case 'p': // Mixed materials
             case 'r': // Three-dimensional artifact or naturally occurring object
             case 't': // Manuscript language material
-                return new BibliographicRecord($record);
+                return  new BibliographicRecord($record);
             case 'z':
                 return new AuthorityRecord($record);
             case 'u': // Unknown
@@ -59,7 +59,7 @@ class Parser
             case 'y': // Serial item holdings
                 return new HoldingsRecord($record);
             default:
-                throw new InvalidParserException("Unknown record type. <pre>" . $record->asXML() . "</pre>");
+                throw new InvalidParserException("Unknown record type. ".PHP_EOL . $record->asXML() . PHP_EOL);
         }
     }
 }

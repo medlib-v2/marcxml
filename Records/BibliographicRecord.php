@@ -40,12 +40,14 @@ use Danmichaelo\QuiteSimpleXmlElement\QuiteSimpleXmlElement;
  * @property array     $meetings
  * @property array     $subjects
  * @property array     $genres
+ * @property string    $support
  * @property array     $classifications
  * @property array     $debug
  * @property int       $pages
  * @property int       $year
  * @property Carbon    $modified
  * @property Carbon    $created
+ * @property array     $details_notes
  */
 class BibliographicRecord extends Record
 {
@@ -274,7 +276,6 @@ class BibliographicRecord extends Record
          * If Leader/06 = m: Computer Files
          * If Leader/06 = p: Mixed Materials
          */
-
         $ldr = str_split($data->text('marc:leader'));
         $f007 = str_split($data->text('marc:controlfield[@tag="007"]'));
         $f008 = str_split($data->text('marc:controlfield[@tag="008"]'));
@@ -290,26 +291,16 @@ class BibliographicRecord extends Record
             'f7_02' => array_get($f007, 1),
         ];
 
-        if (count($ldr) < 8) {
-            return;
-        }
+        if (count($ldr) < 8) { return; }
 
-        if (count($f007) < 2) {
-            return;
-        }
+        if (count($f007) < 2) { return; }
 
         switch ($ldr[6]) {
 
             case 'a':
 
-                if (in_array($ldr[7], ['a', 'c', 'd', 'm'])) {
-                    $material = 'Book';
-                }
-
-                if (in_array($ldr[7], ['b', 'i', 's'])) {
-                    $material = 'Series';
-                }
-
+                if (in_array($ldr[7], ['a', 'c', 'd', 'm'])) { $material = 'Book'; }
+                if (in_array($ldr[7], ['b', 'i', 's'])) { $material = 'Series'; }
                 break;
 
             case 't':
@@ -392,7 +383,6 @@ class BibliographicRecord extends Record
                 case 'p':
                     $material = 'Periodical';
                     break;
-
             }
 
             if (array_get($ldr, 7) == 'a') {
@@ -808,15 +798,19 @@ class BibliographicRecord extends Record
                     $this->edition = $node->text('marc:subfield[@code="a"]');
                     break;
 
+                case 256:
+                    $this->support = $node->text('marc:subfield[@code="a"]');
+                    break;
+
                 case 260:
-                    $this->placeOfPublication = $node->text('marc:subfield[@code="a"]');
-                    $this->publisher = $node->text('marc:subfield[@code="b"]');
+                    $this->placeOfPublication = trim($node->text('marc:subfield[@code="a"]'), ':');
+                    $this->publisher = trim($node->text('marc:subfield[@code="b"]'), ':');
                     $y = preg_replace('/^.*?([0-9]{4}).*$/', '\1', $node->first('marc:subfield[@code="c"]'));
                     $this->year = $y ? intval($y) : null;
                     break;
 
                 case 300:
-                    $this->extent = $node->text('marc:subfield[@code="a"]');
+                    $this->extent = trim($node->text('marc:subfield[@code="a"]'), ':');
 
                     # 2.5B2 "327 s.", 2.5B4 "48 [i.e. 96] s.", 2.5B7 "[93] s."
                     preg_match(
@@ -841,7 +835,7 @@ class BibliographicRecord extends Record
 
                 case 490:
                     $serie = [
-                        'title' => $node->text('marc:subfield[@code="a"]'),
+                        'title' => trim($node->text('marc:subfield[@code="a"]'), ':'),
                         'volume' => $node->text('marc:subfield[@code="v"]')
                     ];
                     $tmp_series = $this->series;
@@ -879,6 +873,12 @@ class BibliographicRecord extends Record
                     ];
                     break;
 
+                // 538 - System Details Note (R)
+                case 538:
+                    $details[] = $node->text('marc:subfield[@code="a"]');
+                    $this->details_notes = $details;
+                    break;
+
                 // 580 : Complex Linking Note (R)
                 case 580:
 
@@ -896,7 +896,7 @@ class BibliographicRecord extends Record
 
                     $name = $node->text('marc:subfield[@code="a"]');
                     $qualifiers = array();
-                    $titles = $node->text('marc:subfield[@code="c"]');
+                    $titles = trim($node->text('marc:subfield[@code="c"]'), ':');
                     if (!empty($titles)) {
                         $qualifiers[] = trim($titles, '(),.');
                     }
@@ -1044,7 +1044,7 @@ class BibliographicRecord extends Record
                     $this->parseRelator($node, $author, 'added');
                     $this->parseAuthority($node->text('marc:subfield[@code="0"]'), $author);
 
-                    $dates = $node->text('marc:subfield[@code="d"]');
+                    $dates = trim($node->text('marc:subfield[@code="d"]'), '-');
                     if (!empty($dates)) {
                         $author['dates'] = $dates;
                     }
@@ -1174,6 +1174,7 @@ class BibliographicRecord extends Record
                     $series[] = $serie;
                     break;
 
+                // 856 - Electronic Location and Access (R)
                 case 856:
                 case 956:
                     /**
@@ -1181,12 +1182,20 @@ class BibliographicRecord extends Record
                      * 956 ?
                      * <marc:datafield tag="856" ind1="4" ind2="2">
                      *    <marc:subfield code="3">Beskrivelse fra forlaget (kort)</marc:subfield>
-                     *     <marc:subfield code="u">http://content.bibsys.no/content/?type=descr_publ_brief&amp;isbn=0521176832</marc:subfield>
+                     *     <marc:subfield code="u">http://content.bibsys.no/content/?type=descr_publ_brief&isbn=0521176832</marc:subfield>
                      * </marc:datafield>
                      * <marc:datafield tag="956" ind1="4" ind2="2">
                      *     <marc:subfield code="3">Omslagsbilde</marc:subfield>
-                     *     <marc:subfield code="u">http://innhold.bibsys.no/bilde/forside/?size=mini&amp;id=9780521176835.jpg</marc:subfield>
+                     *     <marc:subfield code="u">http://innhold.bibsys.no/bilde/forside/?size=mini&id=9780521176835.jpg</marc:subfield>
                      *     <marc:subfield code="q">image/jpeg</marc:subfield>
+                     * </marc:datafield>
+                     *
+                     * <marc:datafield tag="856" ind1="4" ind2="0">
+                     *      <marc:subfield code="u">http://www.whitehouse.gov</marc:subfield>
+                     * </marc:datafield>
+                     * <marc:datafield tag="856" ind1="4" ind2="0">
+                     *      <marc:subfield code="u">http://lcweb.loc.gov/staff/wpp/whitehouse.html</marc:subfield>
+                     *      <marc:subfield code="z">Web site archive</marc:subfield>
                      * </marc:datafield>
                      */
                     $description = $node->text('marc:subfield[@code="3"]');
