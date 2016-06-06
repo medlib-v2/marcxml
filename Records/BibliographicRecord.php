@@ -274,7 +274,6 @@ class BibliographicRecord extends Record
          * If Leader/06 = m: Computer Files
          * If Leader/06 = p: Mixed Materials
          */
-
         $ldr = str_split($data->text('marc:leader'));
         $f007 = str_split($data->text('marc:controlfield[@tag="007"]'));
         $f008 = str_split($data->text('marc:controlfield[@tag="008"]'));
@@ -809,14 +808,14 @@ class BibliographicRecord extends Record
                     break;
 
                 case 260:
-                    $this->placeOfPublication = $node->text('marc:subfield[@code="a"]');
-                    $this->publisher = $node->text('marc:subfield[@code="b"]');
+                    $this->placeOfPublication = trim($node->text('marc:subfield[@code="a"]'), ':');
+                    $this->publisher = trim($node->text('marc:subfield[@code="b"]'), ':');
                     $y = preg_replace('/^.*?([0-9]{4}).*$/', '\1', $node->first('marc:subfield[@code="c"]'));
                     $this->year = $y ? intval($y) : null;
                     break;
 
                 case 300:
-                    $this->extent = $node->text('marc:subfield[@code="a"]');
+                    $this->extent = trim($node->text('marc:subfield[@code="a"]'), ':');
 
                     # 2.5B2 "327 s.", 2.5B4 "48 [i.e. 96] s.", 2.5B7 "[93] s."
                     preg_match(
@@ -841,7 +840,7 @@ class BibliographicRecord extends Record
 
                 case 490:
                     $serie = [
-                        'title' => $node->text('marc:subfield[@code="a"]'),
+                        'title' => trim($node->text('marc:subfield[@code="a"]'), ':'),
                         'volume' => $node->text('marc:subfield[@code="v"]')
                     ];
                     $tmp_series = $this->series;
@@ -896,7 +895,7 @@ class BibliographicRecord extends Record
 
                     $name = $node->text('marc:subfield[@code="a"]');
                     $qualifiers = array();
-                    $titles = $node->text('marc:subfield[@code="c"]');
+                    $titles = trim($node->text('marc:subfield[@code="c"]'), ':');
                     if (!empty($titles)) {
                         $qualifiers[] = trim($titles, '(),.');
                     }
@@ -1044,7 +1043,7 @@ class BibliographicRecord extends Record
                     $this->parseRelator($node, $author, 'added');
                     $this->parseAuthority($node->text('marc:subfield[@code="0"]'), $author);
 
-                    $dates = $node->text('marc:subfield[@code="d"]');
+                    $dates = trim($node->text('marc:subfield[@code="d"]'), '-');
                     if (!empty($dates)) {
                         $author['dates'] = $dates;
                     }
