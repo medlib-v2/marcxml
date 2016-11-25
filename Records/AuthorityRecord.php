@@ -24,8 +24,8 @@ use Danmichaelo\QuiteSimpleXmlElement\QuiteSimpleXmlElement;
  * @property string   $vocabulary
  * @property string   $altLabels
  */
-class AuthorityRecord extends Record
-{
+class AuthorityRecord extends Record {
+
     /**
      * @see http://www.loc.gov/marc/authority/ad008.html
      */
@@ -69,13 +69,11 @@ class AuthorityRecord extends Record
      */
     public function __construct(QuiteSimpleXmlElement $data = null)
     {
-        if (is_null($data)) {
-            return;
-        }
+        if (is_null($data)) { return; }
 
-        $altLabels = array();
+        $altLabels = [];
 
-        // 001: Control number
+        /** 001: Control number **/
         $this->id = $data->text('marc:controlfield[@tag="001"]');
 
         /**
@@ -85,17 +83,17 @@ class AuthorityRecord extends Record
          */
         $this->agency = $data->text('marc:controlfield[@tag="003"]');
 
-        // 005: Modified
+        /** 005: Modified  **/
         $this->modified = $this->parseDateTime($data->text('marc:controlfield[@tag="005"]'));
 
-        // 008: Extract *some* information
+        /** 008: Extract *some* information **/
         $f008 = $data->text('marc:controlfield[@tag="008"]');
         $r = substr($f008, 10, 1);
         $this->cataloging = isset(self::$cat_rules[$r]) ? self::$cat_rules[$r] : null;
         $r = substr($f008, 11, 1);
         $this->vocabulary = isset(self::$vocabularies[$r]) ? self::$vocabularies[$r] : null;
 
-        // 040:
+        /** 040: **/
         $source = $data->first('marc:datafield[@tag="040"]');
         if ($source) {
             $this->catalogingAgency = $source->text('marc:subfield[@code="a"]') ?: null;
@@ -105,7 +103,7 @@ class AuthorityRecord extends Record
             $this->vocabulary = $source->text('marc:subfield[@code="f"]') ?: $this->vocabulary;
         }
 
-        // 100: Personal name (NR)
+        /** 100: Personal name (NR) **/
         foreach ($data->all('marc:datafield[@tag="100"]') as $field) {
             $this->class = 'person';
             $this->name = $field->text('marc:subfield[@code="a"]');
@@ -116,7 +114,7 @@ class AuthorityRecord extends Record
             $this->death = (count($bd) > 1 && $bd[1]) ? $bd[1] : null;
         }
 
-        // 110: Corporate Name (NR)
+        /** 110: Corporate Name (NR) **/
         foreach ($data->all('marc:datafield[@tag="110"]') as $field) {
             $this->class = 'corporation';
             $this->name = $field->text('marc:subfield[@code="a"]');
@@ -125,7 +123,7 @@ class AuthorityRecord extends Record
                 : $this->name;
         }
 
-        // 111: Meeting Name (NR)
+        /** 111: Meeting Name (NR) **/
         foreach ($data->all('marc:datafield[@tag="111"]') as $field) {
             $this->class = 'meeting';
             $this->name = $field->text('marc:subfield[@code="a"]');
@@ -134,9 +132,9 @@ class AuthorityRecord extends Record
                 : $this->name;
         }
 
-        // 130: Uniform title: Not interested for now
+        /** 130: Uniform title: Not interested for now **/
 
-        // 150: Topical Term (NR)
+        /** 150: Topical Term (NR) **/
         foreach ($data->all('marc:datafield[@tag="150"]') as $field) {
 
             $this->class = 'topicalTerm';
@@ -162,11 +160,11 @@ class AuthorityRecord extends Record
             // TODO: ...
         }
 
-        // 151: Geographic Term (NR)
-        // 155: Genre/form Term (NR)
+        /** 151: Geographic Term (NR) **/
+        /** 155: Genre/form Term (NR) **/
 
-        // 375: Gender (R)
-        $genders = array();
+        /** 375: Gender (R) **/
+        $genders = [];
         foreach ($data->all('marc:datafield[@tag="375"]') as $field) {
 
             $gender = $field->text('marc:subfield[@code="a"]');
@@ -177,18 +175,18 @@ class AuthorityRecord extends Record
         }
         $this->genders = $genders;
 
-        // Alias gender to the last value to make utilizing easier
+        /** Alias gender to the last value to make utilizing easier **/
         $this->gender = (count($this->genders) > 0)
             ? $this->genders[count($this->genders) - 1]['value']  // assume sane ordering for now
             : null;
 
-        // 400: See From Tracing-Personal Name (R)
+        /** 400: See From Tracing-Personal Name (R) **/
         foreach ($data->all('marc:datafield[@tag="400"]') as $field) {
 
             $altLabels[] = $field->text('marc:subfield[@code="a"]');
         }
 
-        // 410: See From Tracing-Corporate Name (R)
+        /** 410: See From Tracing-Corporate Name (R) **/
         foreach ($data->all('marc:datafield[@tag="410"]') as $field) {
 
             $s = $field->text('marc:subfield[@code="a"]');
@@ -201,7 +199,7 @@ class AuthorityRecord extends Record
             $altLabels[] = $s;
         }
 
-        // 411: See From Tracing-Meeting Name (R)
+        /** 411: See From Tracing-Meeting Name (R) **/
         foreach ($data->all('marc:datafield[@tag="411"]') as $field) {
 
             $altLabels[] = $field->text('marc:subfield[@code="a"]');

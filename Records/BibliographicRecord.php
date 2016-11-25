@@ -289,26 +289,15 @@ class BibliographicRecord extends Record
             'f7_02' => array_get($f007, 1),
         ];
 
-        if (count($ldr) < 8) {
-            return;
-        }
+        if (count($ldr) < 8) { return; }
 
-        if (count($f007) < 2) {
-            return;
-        }
+        if (count($f007) < 2) { return; }
 
         switch ($ldr[6]) {
 
             case 'a':
-
-                if (in_array($ldr[7], ['a', 'c', 'd', 'm'])) {
-                    $material = 'Book';
-                }
-
-                if (in_array($ldr[7], ['b', 'i', 's'])) {
-                    $material = 'Series';
-                }
-
+                if (in_array($ldr[7], ['a', 'c', 'd', 'm'])) { $material = 'Book'; }
+                if (in_array($ldr[7], ['b', 'i', 's'])) { $material = 'Series'; }
                 break;
 
             case 't':
@@ -361,15 +350,10 @@ class BibliographicRecord extends Record
 
         } elseif ($material == 'Music') {
 
-            if ($f007[0] == 't') {
-                $material = 'Sheet music';
-            } else {
-
+            if ($f007[0] == 't') { $material = 'Sheet music'; }
+            else {
                 $material = $this->getMaterialSubtypeFrom007($f007[0], $f007[1], $material);
-
-                if (array_get($ldr, 7) == 'a') {
-                    $material .= ' track';
-                }
+                if (array_get($ldr, 7) == 'a') { $material .= ' track'; }
             }
 
         } elseif ($material == 'Series') {
@@ -382,33 +366,26 @@ class BibliographicRecord extends Record
 
                 case 'n':
                     $material = 'Newspaper';
-
-                    if ($f007[0] == 'h') {
-                        $material .= ' on microform';
-                    }
+                    if ($f007[0] == 'h') { $material .= ' on microform'; }
                     break;
 
                 case 'p':
                     $material = 'Periodical';
                     break;
-
             }
 
-            if (array_get($ldr, 7) == 'a') {
-
-                $material = 'Article';
-            }
+            if (array_get($ldr, 7) == 'a') { $material = 'Article'; }
 
         } elseif ($material == 'Book') {
 
             if (isset($natureOfContents[$f008[24]])) {
-                // Slight simplification
+                /** Slight simplification  **/
                 $material = $natureOfContents[$f008[24]];
             }
 
             if (array_get($ldr, 7) == 'a') {
                 $material = 'Article';
-                // or Article/Chapter ?
+                /** or Article/Chapter ? **/
             }
         }
 
