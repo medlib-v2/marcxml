@@ -40,12 +40,14 @@ use Danmichaelo\QuiteSimpleXmlElement\QuiteSimpleXmlElement;
  * @property array     $meetings
  * @property array     $subjects
  * @property array     $genres
+ * @property string    $support
  * @property array     $classifications
  * @property array     $debug
  * @property int       $pages
  * @property int       $year
  * @property Carbon    $modified
  * @property Carbon    $created
+ * @property array     $details_notes
  */
 class BibliographicRecord extends Record
 {
@@ -296,6 +298,10 @@ class BibliographicRecord extends Record
         switch ($ldr[6]) {
 
             case 'a':
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/master
                 if (in_array($ldr[7], ['a', 'c', 'd', 'm'])) { $material = 'Book'; }
                 if (in_array($ldr[7], ['b', 'i', 's'])) { $material = 'Series'; }
                 break;
@@ -784,6 +790,10 @@ class BibliographicRecord extends Record
                     $this->edition = $node->text('marc:subfield[@code="a"]');
                     break;
 
+                case 256:
+                    $this->support = $node->text('marc:subfield[@code="a"]');
+                    break;
+
                 case 260:
                     $this->placeOfPublication = trim($node->text('marc:subfield[@code="a"]'), ':');
                     $this->publisher = trim($node->text('marc:subfield[@code="b"]'), ':');
@@ -853,6 +863,12 @@ class BibliographicRecord extends Record
                         'assigning_source' => $node->text('marc:subfield[@code="c"]'),
                         'text' => $node->text('marc:subfield[@code="a"]'),
                     ];
+                    break;
+
+                // 538 - System Details Note (R)
+                case 538:
+                    $details[] = $node->text('marc:subfield[@code="a"]');
+                    $this->details_notes = $details;
                     break;
 
                 // 580 : Complex Linking Note (R)
@@ -1150,6 +1166,7 @@ class BibliographicRecord extends Record
                     $series[] = $serie;
                     break;
 
+                // 856 - Electronic Location and Access (R)
                 case 856:
                 case 956:
                     /**
@@ -1157,12 +1174,20 @@ class BibliographicRecord extends Record
                      * 956 ?
                      * <marc:datafield tag="856" ind1="4" ind2="2">
                      *    <marc:subfield code="3">Beskrivelse fra forlaget (kort)</marc:subfield>
-                     *     <marc:subfield code="u">http://content.bibsys.no/content/?type=descr_publ_brief&amp;isbn=0521176832</marc:subfield>
+                     *     <marc:subfield code="u">http://content.bibsys.no/content/?type=descr_publ_brief&isbn=0521176832</marc:subfield>
                      * </marc:datafield>
                      * <marc:datafield tag="956" ind1="4" ind2="2">
                      *     <marc:subfield code="3">Omslagsbilde</marc:subfield>
-                     *     <marc:subfield code="u">http://innhold.bibsys.no/bilde/forside/?size=mini&amp;id=9780521176835.jpg</marc:subfield>
+                     *     <marc:subfield code="u">http://innhold.bibsys.no/bilde/forside/?size=mini&id=9780521176835.jpg</marc:subfield>
                      *     <marc:subfield code="q">image/jpeg</marc:subfield>
+                     * </marc:datafield>
+                     *
+                     * <marc:datafield tag="856" ind1="4" ind2="0">
+                     *      <marc:subfield code="u">http://www.whitehouse.gov</marc:subfield>
+                     * </marc:datafield>
+                     * <marc:datafield tag="856" ind1="4" ind2="0">
+                     *      <marc:subfield code="u">http://lcweb.loc.gov/staff/wpp/whitehouse.html</marc:subfield>
+                     *      <marc:subfield code="z">Web site archive</marc:subfield>
                      * </marc:datafield>
                      */
                     $description = $node->text('marc:subfield[@code="3"]');
