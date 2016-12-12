@@ -1,7 +1,7 @@
 {
   "name": "medlib/marcxml",
   "description": "Medlib is a searche Library",
-  "keywords": ["z3950", "yaz", "marc21", "xml", "search books", "library"],
+  "keywords": ["Z3950", "Yaz", "Marc21", "Xml", "Search books", "Library"],
   "license": "MIT",
   "type": "library",
   "homepage": "https://www.medlib.fr",
