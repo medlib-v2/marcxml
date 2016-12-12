@@ -31,23 +31,25 @@ use Danmichaelo\QuiteSimpleXmlElement\QuiteSimpleXmlElement;
  * @property string    $description
  * @property string    $preceding
  * @property string    $succeeding
+ * @property string    $language
  * @property string[]  $isbns
- * @property string[]  $issns
- * @property string[]  $notes
- * @property array     $series
- * @property array     $other_form
- * @property array     $creators
- * @property array     $meetings
- * @property array     $subjects
- * @property array     $genres
- * @property string    $support
- * @property array     $classifications
- * @property array     $debug
- * @property int       $pages
- * @property int       $year
- * @property Carbon    $modified
- * @property Carbon    $created
- * @property array     $details_notes
+ * @property string[] $issns
+ * @property string[] $notes
+ * @property array    $series
+ * @property array    $other_form
+ * @property array    $creators
+ * @property array    $meetings
+ * @property array    $subjects
+ * @property array    $genres
+ * @property string   $support
+ * @property array    $classifications
+ * @property array    $debug
+ * @property int      $pages
+ * @property int      $year
+ * @property Carbon   $modified
+ * @property Carbon   $created
+ * @property array    $details_notes
+ * @property string   language
  */
 class BibliographicRecord extends Record
 {
@@ -413,7 +415,7 @@ class BibliographicRecord extends Record
 
         foreach ($fields as $key => $val) {
 
-            $t = $node->text('marc:subfield[@code="' . $key . '"]');
+            $t = $this->parseExchangeChars($node->text('marc:subfield[@code="' . $key . '"]'));
 
             if (!is_array($val)) {
                 $val = array($val);
@@ -465,7 +467,7 @@ class BibliographicRecord extends Record
 
         $ind2 = $node->attr('ind2');
 
-        $id = $node->text('marc:subfield[@code="0"]');
+        $id = $this->parseExchangeChars($node->text('marc:subfield[@code="0"]'));
         $out['id'] = empty($id) ? null : $id;
 
         if (isset($vocabularies[$ind2])) {
@@ -474,7 +476,7 @@ class BibliographicRecord extends Record
 
         } elseif ($ind2 == '7') {
 
-            $vocab = $node->text('marc:subfield[@code="2"]');
+            $vocab = $this->parseExchangeChars($node->text('marc:subfield[@code="2"]'));
 
             if (!empty($vocab)) {
 
@@ -483,7 +485,7 @@ class BibliographicRecord extends Record
 
         } elseif ($ind2 == '4') {
 
-            $this->parseAuthority($node->text('marc:subfield[@code="0"]'), $out);
+            $this->parseAuthority($this->parseExchangeChars($node->text('marc:subfield[@code="0"]')), $out);
         }
 
         $out['parts'] = [];
@@ -521,21 +523,22 @@ class BibliographicRecord extends Record
         $this->parseMaterial($data);
 
         // Control fields
-        $this->id = $data->text('marc:controlfield[@tag="001"]');
+        $this->id = $this->parseExchangeChars($data->text('marc:controlfield[@tag="001"]'));
 
         /**
          * 003: MARC code for the agency whose system control number is
          * contained in field 001 (Control Number)
          * @see http://www.loc.gov/marc/authority/ecadorg.html
          */
-        $this->agency = $data->text('marc:controlfield[@tag="003"]');
+        $this->agency = $this->parseExchangeChars($data->text('marc:controlfield[@tag="003"]'));
 
         // 005: Modified
         $this->modified = $this->parseDateTime($data->text('marc:controlfield[@tag="005"]'));
 
         // 008: Extract *some* information
-        $f008 = $data->text('marc:controlfield[@tag="008"]');
+        $f008 = $this->parseExchangeChars($data->text('marc:controlfield[@tag="008"]'));
         $this->created = $this->parseDateTime(substr($f008, 0, 6));
+        $this->language = substr($f008, 39, 3);
 
         $creators = [];
         $meetings = [];
@@ -565,7 +568,7 @@ class BibliographicRecord extends Record
 
                 // 010 - Library of Congress Control Number (NR)
                 case 10:
-                    $this->lccn = $node->text('marc:subfield[@code="a"]');
+                    $this->lccn = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 // 020 - International Standard Book Number (R)
@@ -590,7 +593,7 @@ class BibliographicRecord extends Record
 
                 // 040 - Cataloging Source (NR)
                 case 40:
-                    $x = $node->text('marc:subfield[@code="e"]');
+                    $x = $this->parseExchangeChars($node->text('marc:subfield[@code="e"]'));
                     if ($x) {
                         $this->catalogingRules = $x;
                     }
@@ -652,8 +655,8 @@ class BibliographicRecord extends Record
 
 
                 case 89:
-                    if (!isset($this->klass)) $this->klass = array();
-                    $klass = $node->text('marc:subfield[@code="a"]');
+                    if (!isset($this->klass)) $this->klass = [];
+                    $klass = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     $klass = preg_replace('/[^0-9.]/', '', $klass);
 
                     foreach ($this->klass as $kitem) {
@@ -666,7 +669,7 @@ class BibliographicRecord extends Record
                     break;
 
                 case 100:
-                    $author = [ 'name' => $node->text('marc:subfield[@code="a"]') ];
+                    $author = [ 'name' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')) ];
 
                     $author['normalizedName'] = $author['name'];
                     $spl = explode(', ', $author['name']);
@@ -683,9 +686,9 @@ class BibliographicRecord extends Record
                     break;
 
                 case 110:
-                    $author = array(
-                        'name' => $node->text('marc:subfield[@code="a"]'),
-                    );
+                    $author = [
+                        'name' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')),
+                    ];
                     $author['normalizedName'] = $author['name'];
                     foreach ($node->all('marc:subfield[@code="b"]') as $subunit) {
                         $author['name'] .= self::$subfieldSeparator . trim($subunit, ',');
@@ -697,7 +700,7 @@ class BibliographicRecord extends Record
                     break;
 
                 case 111:
-                    $meeting = [ 'name' => $node->text('marc:subfield[@code="a"]') ];
+                    $meeting = [ 'name' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')) ];
                     $meeting['normalizedName'] = $meeting['name'];
                     $this->parseRelator($node, $meeting, 'meeting');
                     $this->parseAuthority($node->text('marc:subfield[@code="0"]'), $meeting);
@@ -710,7 +713,7 @@ class BibliographicRecord extends Record
 
                     // TODO: Need a more robust way to prefer 130 over 245
                     //       Currently we depend on 130 coming before 245.
-                    $this->title = $node->text('marc:subfield[@code="a"]');
+                    $this->title = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 // 245 : Title Statement (NR)
@@ -753,13 +756,13 @@ class BibliographicRecord extends Record
                     }
 
                     // $n : Number of part/section of a work (R)
-                    $part_no = $node->text('marc:subfield[@code="n"]');
+                    $part_no = $this->parseExchangeChars($node->text('marc:subfield[@code="n"]'));
                     if ($part_no !== '') {
                         $this->part_no = $part_no;
                     }
 
                     // $p : Name of part/section of a work (R)
-                    $part_name = $node->text('marc:subfield[@code="p"]');
+                    $part_name = $this->parseExchangeChars($node->text('marc:subfield[@code="p"]'));
                     if ($part_name !== '') {
                         $this->part_name = $part_name;
                     }
@@ -784,8 +787,8 @@ class BibliographicRecord extends Record
                     // 6 - Caption title
                     // 7 - Running title
                     // 8 - Spine title
-                    $title = rtrim($node->text('marc:subfield[@code="a"]'), ' :-');
-                    $subtitle = $node->text('marc:subfield[@code="b"]');
+                    $title = rtrim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), ' :-');
+                    $subtitle = $this->parseExchangeChars($node->text('marc:subfield[@code="b"]'));
 
                     /** @see  http://www.loc.gov/marc/bibliographic/bd246.html */
                     if (!empty($subtitle)) {
@@ -793,24 +796,24 @@ class BibliographicRecord extends Record
                     }
                     $alternativeTitles[] = $title;
                     break;
-
+                // Edition
                 case 250:
-                    $this->edition = $node->text('marc:subfield[@code="a"]');
+                    $this->edition = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 case 256:
-                    $this->support = $node->text('marc:subfield[@code="a"]');
+                    $this->support = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 case 260:
-                    $this->placeOfPublication = trim($node->text('marc:subfield[@code="a"]'), ':');
-                    $this->publisher = trim($node->text('marc:subfield[@code="b"]'), ':');
+                    $this->placeOfPublication = trim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), ':');
+                    $this->publisher = trim($this->parseExchangeChars($node->text('marc:subfield[@code="b"]')), ':');
                     $y = preg_replace('/^.*?([0-9]{4}).*$/', '\1', $node->first('marc:subfield[@code="c"]'));
                     $this->year = $y ? intval($y) : null;
                     break;
 
                 case 300:
-                    $this->extent = trim($node->text('marc:subfield[@code="a"]'), ':');
+                    $this->extent = trim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), ':');
 
                     # 2.5B2 "327 s.", 2.5B4 "48 [i.e. 96] s.", 2.5B7 "[93] s."
                     preg_match(
@@ -835,8 +838,8 @@ class BibliographicRecord extends Record
 
                 case 490:
                     $serie = [
-                        'title' => trim($node->text('marc:subfield[@code="a"]'), ':'),
-                        'volume' => $node->text('marc:subfield[@code="v"]')
+                        'title' => trim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), ':'),
+                        'volume' => $this->parseExchangeChars($node->text('marc:subfield[@code="v"]'))
                     ];
                     $tmp_series = $this->series;
                     $tmp_series[] = $serie;
@@ -846,18 +849,18 @@ class BibliographicRecord extends Record
                 // 500 : General Note (R)
                 case 500:
                     // $a - General note (NR)
-                    $notes[] = $node->text('marc:subfield[@code="a"]');
+                    $notes[] = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 // 502 : Dissertation Note (R)
                 case 502:
                     // $a - Dissertation note (NR)
-                    $notes[] = $node->text('marc:subfield[@code="a"]');
+                    $notes[] = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 case 505:
                     // $a -
-                    $this->contents = $node->text('marc:subfield[@code="a"]');
+                    $this->contents = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     break;
 
                 case 520:
@@ -868,18 +871,18 @@ class BibliographicRecord extends Record
                      * </datafield>
                      */
                     $this->summary = [
-                        'assigning_source' => $node->text('marc:subfield[@code="c"]'),
-                        'text' => $node->text('marc:subfield[@code="a"]'),
+                        'assigning_source' => $this->parseExchangeChars($node->text('marc:subfield[@code="c"]')),
+                        'text' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')),
                     ];
                     break;
 
                 // 538 - System Details Note (R)
                 case 538:
-                    $details[] = $node->text('marc:subfield[@code="a"]');
+                    $details[] = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     $this->details_notes = $details;
                     break;
 
-                // 580 : Complex Linking Note (R)
+                // 580 - Complex Linking Note (R)
                 case 580:
 
                     if ($data->has('marc:datafield[@tag="780"]')) {
@@ -894,9 +897,9 @@ class BibliographicRecord extends Record
                 case 600:
                     $tmp = $this->parseSubjectAddedEntry($node);
 
-                    $name = $node->text('marc:subfield[@code="a"]');
+                    $name = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     $qualifiers = array();
-                    $titles = trim($node->text('marc:subfield[@code="c"]'), ':');
+                    $titles = trim($this->parseExchangeChars($node->text('marc:subfield[@code="c"]')), ':');
                     if (!empty($titles)) {
                         $qualifiers[] = trim($titles, '(),.');
                     }
@@ -929,7 +932,7 @@ class BibliographicRecord extends Record
                 case 610:
                     $tmp = $this->parseSubjectAddedEntry($node);
 
-                    $name = trim($node->text('marc:subfield[@code="a"]'), ',');
+                    $name = trim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), ',');
                     foreach ($node->all('marc:subfield[@code="b"]') as $subunit) {
                         $name .= self::$subfieldSeparator . trim($subunit, ',');
                     }
@@ -944,7 +947,7 @@ class BibliographicRecord extends Record
                     if (!empty($dates)) {
                         $tmp['time'] = trim($dates, ' :,.()');
                     }
-                    $location = $node->text('marc:subfield[@code="c"]');
+                    $location = $this->parseExchangeChars($node->text('marc:subfield[@code="c"]'));
                     if (!empty($location)) {
                         $tmp['place'] = trim($location, ' :,.()');
                     }
@@ -957,7 +960,7 @@ class BibliographicRecord extends Record
                         $tmp['number'] = trim($number, ' :,.()');
                     }
 
-                    $name = trim($node->text('marc:subfield[@code="a"]'), ',');
+                    $name = trim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), ',');
                     $tmp['type'] = 'meeting';
                     $tmp['term'] = $name . $tmp['term'];
                     array_push($subjects, $tmp);
@@ -966,7 +969,7 @@ class BibliographicRecord extends Record
                 case 648:
                     $tmp = $this->parseSubjectAddedEntry($node);
 
-                    $emne = $node->text('marc:subfield[@code="a"]');
+                    $emne = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     $tmp['type'] = 'chronologic';
                     $tmp['term'] = trim($emne, '.') . $tmp['term'];
 
@@ -976,7 +979,7 @@ class BibliographicRecord extends Record
                 case 650:
                     $tmp = $this->parseSubjectAddedEntry($node);
 
-                    $emne = $node->text('marc:subfield[@code="a"]');
+                    $emne = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     $tmp['term'] = trim($emne, '.') . $tmp['term'];
                     $tmp['type'] = 'topic';
 
@@ -986,7 +989,7 @@ class BibliographicRecord extends Record
                 case 651:
                     $tmp = $this->parseSubjectAddedEntry($node);
 
-                    $emne = $node->text('marc:subfield[@code="a"]');
+                    $emne = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
                     $tmp['type'] = 'geographic';
                     $tmp['term'] = trim($emne, '.') . $tmp['term'];
 
@@ -1028,13 +1031,12 @@ class BibliographicRecord extends Record
                 case 655:
 
                     $tmp = $this->parseSubjectAddedEntry($node);
-                    $tmp['term'] = trim($node->text('marc:subfield[@code="a"]'), '.') . $tmp['term'];
+                    $tmp['term'] = trim($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')), '.') . $tmp['term'];
 
                     array_push($genres, $tmp);
                     break;
-
                 case 700:
-                    $author = [ 'name' => $node->text('marc:subfield[@code="a"]') ];
+                    $author = [ 'name' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')) ];
                     $author['normalizedName'] = $author['name'];
                     $spl = explode(', ', $author['name']);
                     if (count($spl) == 2) {
@@ -1042,7 +1044,7 @@ class BibliographicRecord extends Record
                     }
 
                     $this->parseRelator($node, $author, 'added');
-                    $this->parseAuthority($node->text('marc:subfield[@code="0"]'), $author);
+                    $this->parseAuthority($this->parseExchangeChars($node->text('marc:subfield[@code="0"]')), $author);
 
                     $dates = trim($node->text('marc:subfield[@code="d"]'), '-');
                     if (!empty($dates)) {
@@ -1051,10 +1053,10 @@ class BibliographicRecord extends Record
 
                     $creators[] = $author;
                     break;
-
+                // Editor
                 case 710:
                     $author = array(
-                        'name' => $node->text('marc:subfield[@code="a"]'),
+                        'name' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')),
                     );
                     $author['normalizedName'] = $author['name'];
 
@@ -1068,11 +1070,11 @@ class BibliographicRecord extends Record
                 // See also: 580
                 case 773:
                     $part_of = isset($part_of) ? $part_of : array();
-                    $part_of['relationship'] = $node->text('marc:subfield[@code="i"]');
-                    $part_of['title'] = $node->text('marc:subfield[@code="t"]');
-                    $part_of['issn'] = $node->text('marc:subfield[@code="x"]') ?: null;
-                    $part_of['isbn'] = $node->text('marc:subfield[@code="z"]') ?: null;
-                    $part_of['volume'] = $node->text('marc:subfield[@code="v"]') ?: null;
+                    $part_of['relationship'] = $this->parseExchangeChars($node->text('marc:subfield[@code="i"]'));
+                    $part_of['title'] = $this->parseExchangeChars($node->text('marc:subfield[@code="t"]'));
+                    $part_of['issn'] = $this->parseExchangeChars($node->text('marc:subfield[@code="x"]')) ?: null;
+                    $part_of['isbn'] = $this->parseExchangeChars($node->text('marc:subfield[@code="z"]')) ?: null;
+                    $part_of['volume'] = $this->parseExchangeChars($node->text('marc:subfield[@code="v"]')) ?: null;
                     $this->parseAuthority($node->text('marc:subfield[@code="w"]'), $part_of);
 
                     break;
@@ -1167,9 +1169,9 @@ class BibliographicRecord extends Record
                 // 830 : Series Added Entry – Uniform Title (R)
                 case 830:
                     $serie = [
-                        'title' => $node->text('marc:subfield[@code="a"]'),
+                        'title' => $this->parseExchangeChars($node->text('marc:subfield[@code="a"]')),
                         'id' => preg_replace('/\(NO-TrBIB\)/', '', $node->text('marc:subfield[@code="w"]')) ?: null,
-                        'volume' => $node->text('marc:subfield[@code="v"]') ?: null,
+                        'volume' => $this->parseExchangeChars($node->text('marc:subfield[@code="v"]')) ?: null,
                     ];
                     $series[] = $serie;
                     break;
@@ -1198,7 +1200,7 @@ class BibliographicRecord extends Record
                      *      <marc:subfield code="z">Web site archive</marc:subfield>
                      * </marc:datafield>
                      */
-                    $description = $node->text('marc:subfield[@code="3"]');
+                    $description = $this->parseExchangeChars($node->text('marc:subfield[@code="3"]'));
 
                     if (in_array($description, array('Cover image', 'Omslagsbilde'))) {
 
@@ -1210,7 +1212,7 @@ class BibliographicRecord extends Record
                     }
 
                     if (in_array($description, array('Beskrivelse fra forlaget (kort)', 'Beskrivelse fra forlaget (lang)'))) {
-                        $this->description = $node->text('marc:subfield[@code="u"]');
+                        $this->description = $this->parseExchangeChars($node->text('marc:subfield[@code="u"]'));
                     }
                     break;
 
@@ -1221,13 +1223,17 @@ class BibliographicRecord extends Record
                  */
                 case 991:
 
-                    // Multi-volume work (flerbindsverk), parts linked through 773 w
-                    if ($node->text('marc:subfield[@code="a"]') == 'volumes') {
+                    /**
+                     * Multi-volume work (flerbindsverk), parts linked through 773 w
+                     */
+                    if ($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')) == 'volumes') {
                         $this->is_multivolume = true;
                     }
 
-                    // Series (serier), parts linked through 830 w
-                    if ($node->text('marc:subfield[@code="a"]') == 'parts') {
+                    /**
+                     * Series (serier), parts linked through 830 w
+                     */
+                    if ($this->parseExchangeChars($node->text('marc:subfield[@code="a"]')) == 'parts') {
                         $this->is_series = true;
                     }
 
