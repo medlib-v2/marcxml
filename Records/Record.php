@@ -200,7 +200,7 @@ class Record
             chr(207)."c", chr(207)."s", chr(207)."S", chr(201)."i",
             chr(200)."e", chr(193)."e", chr(193)."a", chr(193)."i",
             chr(193)."o", chr(193)."u", chr(195)."u", chr(201)."e",
-            chr(195).chr(194), "&amp;#263;", "Ã¤", "©", "©♭", "©ʼ", "©·");
+            chr(195).chr(194), "&amp;#263;", "Ã¤", "©", chr(169)."d","©♭", "©ʼ", "©·");
         $rep_chars = array("&ouml;", "&Ouml;", "&auml;",
             "&Auml;", "&uuml;", "&Uuml;",
             "", "", "&szlig;",  "&aacute;",
@@ -208,7 +208,7 @@ class Record
             "&#269;", "&#353;", "&#352;", "&iuml;",
             "&euml;", "&egrave;", "&agrave;", "&igrave;",
             "oegrave;", "&ugrave;", "&ucirc;", "&euml;",
-            "&auml;", "&#263;", "&auml;", "à", "é", "i", "e");
+            "&auml;", "&#263;", "&auml;", "&#224;", "&#233;d", "&#233;", "&#238;", "&#234;");
         return str_replace($bad_chars, $rep_chars, $rep_string);
     }
 }
