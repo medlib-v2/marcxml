@@ -181,7 +181,7 @@ class Record
             $rel['isbn'] = $x;
         }
 
-         ""return $rel;
+         return $rel;
     }
 
     /**
