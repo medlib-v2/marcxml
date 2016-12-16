@@ -718,7 +718,7 @@ class BibliographicRecord extends Record
 
                 // 245 : Title Statement (NR)
                 case 245:
-                    $title = $node->text('marc:subfield[@code="a"]') . ' ' . $node->text('marc:subfield[@code="b"]');
+                    $title = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]') . ' ' . $node->text('marc:subfield[@code="b"]'));
                     $title = rtrim($title, ' /');
 
                     $titleParts = preg_split('/(:|=)/', $title, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -768,7 +768,7 @@ class BibliographicRecord extends Record
                     }
 
                     // $h : Medium (NR)
-                    $medium = $node->text('marc:subfield[@code="h"]');
+                    $medium = $this->parseExchangeChars($node->text('marc:subfield[@code="h"]'));
                     if ($medium !== '') {
                         $this->medium = $medium;
                     }
@@ -1204,7 +1204,7 @@ class BibliographicRecord extends Record
 
                     if (in_array($description, array('Cover image', 'Omslagsbilde'))) {
 
-                        $this->cover_image = $node->text('marc:subfield[@code="u"]');
+                        $this->cover_image = $this->parseExchangeChars($node->text('marc:subfield[@code="u"]'));
 
                         /** Silly hack to get larger images from Bibsys: */
                         $this->cover_image = str_replace('mini', 'stor', $this->cover_image);
