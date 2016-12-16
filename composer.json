@@ -1,7 +1,7 @@
 {
   "name": "medlib/marcxml",
   "description": "Medlib is a searche Library",
-  "keywords": ["z3950", "yaz", "marc21", "xml", "search books", "library"],
+  "keywords": ["Z3950", "Yaz", "Marc21", "Xml", "Search books", "Library"],
   "license": "MIT",
   "type": "library",
   "homepage": "https://www.medlib.fr",
@@ -19,7 +19,7 @@
     "php": ">=5.5.9",
     "nesbot/Carbon": "1.*",
     "danmichaelo/quitesimplexmlelement": "~0.2.4",
-    "illuminate/support": "~4.1|~5.0"
+    "illuminate/support": "5.3.*"
 
   },
   "replace": {
@@ -27,7 +27,8 @@
 
   },
   "require-dev": {
-    "phpunit/phpunit": "3.7.*",
+    "phpunit/phpunit": "^5.7",
+    "phpunit/dbunit": ">=1.2",
     "satooshi/php-coveralls": "~0.6"
   },
   "autoload": {

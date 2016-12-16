@@ -89,18 +89,22 @@ class HoldingsRecord extends Record
 
         $this->id = $data->text('marc:controlfield[@tag="001"]');
 
-        $this->bibliographic_record = $data->text('marc:controlfield[@tag="004"]') ?: null;
+        $this->bibliographic_record = $this->parseExchangeChars($data->text('marc:controlfield[@tag="004"]')) ?: null;
 
         $fulltext = array();
         $nonpublic_notes = array();
         $public_notes = array();
 
-        // 008: Extract datestamp only
+        /**
+         * 008: Extract datestamp only
+         */
         $f008 = $data->text('marc:controlfield[@tag="008"]');
         $this->created = $this->parseDateTime(substr($f008, 0, 6));
 
-        // 009: Reserved for local use
-        $this->status = $data->text('marc:controlfield[@tag="009"]');
+        /**
+         * 009: Reserved for local use
+         */
+        $this->status = $this->parseExchangeChars($data->text('marc:controlfield[@tag="009"]'));
 
         foreach ($data->all('marc:datafield') as $node) {
 
@@ -112,27 +116,27 @@ class HoldingsRecord extends Record
                     /**
                      * @see http://www.loc.gov/marc/holdings/concise/hd852.html
                      */
-                    $this->location = $node->text('marc:subfield[@code="a"]');
-                    $this->sublocation = $node->text('marc:subfield[@code="b"]');
-                    $this->shelvinglocation = $node->text('marc:subfield[@code="c"]');
-                    $this->callcode = $node->text('marc:subfield[@code="h"]');
+                    $this->location = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
+                    $this->sublocation = $this->parseExchangeChars($node->text('marc:subfield[@code="b"]'));
+                    $this->shelvinglocation = $this->parseExchangeChars($node->text('marc:subfield[@code="c"]'));
+                    $this->callcode = $this->parseExchangeChars($node->text('marc:subfield[@code="h"]'));
 
-                    if (($x = $node->text('marc:subfield[@code="x"]')) !== '') {
+                    if (($x = $this->parseExchangeChars($node->text('marc:subfield[@code="x"]'))) !== '') {
                         $nonpublic_notes[] = $x;
                     }
-                    if (($x = $node->text('marc:subfield[@code="z"]')) !== '') {
+                    if (($x = $this->parseExchangeChars($node->text('marc:subfield[@code="z"]'))) !== '') {
                         $public_notes[] = $x;
                     }
 
                     break;
 
                 case 856:
-                    $description = $node->text('marc:subfield[@code="3"]');
+                    $description = $this->parseExchangeChars($node->text('marc:subfield[@code="3"]'));
                     if (in_array($description, array('Fulltekst', 'Fulltext'))) {
                         $fulltext[] = array(
-                            'url' => $node->text('marc:subfield[@code="u"]'),
-                            'linktext' => $node->text('marc:subfield[@code="y"]'),
-                            'comment' => $node->text('marc:subfield[@code="z"]'),
+                            'url' => $this->parseExchangeChars($node->text('marc:subfield[@code="u"]')),
+                            'linktext' => $this->parseExchangeChars($node->text('marc:subfield[@code="y"]')),
+                            'comment' => $this->parseExchangeChars($node->text('marc:subfield[@code="z"]')),
                         );
                     }
                     break;
@@ -143,14 +147,14 @@ class HoldingsRecord extends Record
                      * @see http://www.bibsys.no/files/out/biblev/utlaanstatus-marc21.pdf
                      * 859 $f: Use restrictions / Tilgjengelighet
                      */
-                    $x = $node->text('marc:subfield[@code="f"]');
+                    $x = $this->parseExchangeChars($node->text('marc:subfield[@code="f"]'));
                     if ($x !== '') {
                         if (isset(self::$m859_f[$x])) {
                             $this->use_restrictions = self::$m859_f[$x];
                         }
                     }
 
-                    $x = $node->text('marc:subfield[@code="h"]');
+                    $x = $this->parseExchangeChars($node->text('marc:subfield[@code="h"]'));
                     if ($x !== '') {
                         if (isset(self::$m859_h[$x])) {
                             $this->circulation_status = self::$m859_h[$x];
@@ -160,8 +164,10 @@ class HoldingsRecord extends Record
                     break;
 
                 case 866:
-                    // 866: Textual Holdings-General Information
-                    $this->holdings = $node->text('marc:subfield[@code="a"]');
+                    /**
+                     * 866: Textual Holdings-General Information
+                     */
+                    $this->holdings = $this->parseExchangeChars($node->text('marc:subfield[@code="a"]'));
 
                     break;
 
@@ -171,8 +177,8 @@ class HoldingsRecord extends Record
                      * $d - Date acquired (R)
                      */
                     $this->acquired = $this->parseDateTime($node->text('marc:subfield[@code="d"]'));
-                    $this->barcode = $node->text('marc:subfield[@code="p"]');
-                    //$this->status = $node->text('marc:subfield[@code="j"]');
+                    $this->barcode = $this->parseExchangeChars($node->text('marc:subfield[@code="p"]'));
+                    $this->status = $this->parseExchangeChars($node->text('marc:subfield[@code="j"]'));
                     break;
 
             }

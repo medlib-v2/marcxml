@@ -181,6 +181,37 @@ class Record
             $rel['isbn'] = $x;
         }
 
-        return $rel;
+         return $rel;
+    }
+
+    /**
+     * The following helper function restores a collection of malformed characters,
+     * it is based on nearly 3 years experience with several Z39.50 servers
+     *
+     * @param $rep_string
+     *
+     * @return mixed
+     */
+    public function parseExchangeChars($rep_string) {
+        $bad_chars = [
+            chr(0x00C9)."o", chr(0x00C9)."O", chr(0x00C9)."a", chr(0x00C9)."A",
+            chr(0x00C9)."u", chr(0x00C9)."U", chr(137), chr(136), chr(251),
+            chr(194)."a", chr(194)."i", chr(194)."e", chr(208)."c", chr(194)."E",
+            chr(207)."c", chr(207)."s", chr(207)."S", chr(201)."i", chr(200)."e",
+            chr(193)."e", chr(193)."a", chr(193)."i", chr(193)."o", chr(193)."u",
+            chr(195)."u", chr(201)."e", chr(195).chr(194), "&amp;#263;", "Ã¤",
+            chr(169)."d", "©♭", "©ʼ", "©·", "℗e", "ℓa", "©i", "ài", "℗E", "©",
+        ];
+        $rep_chars = [
+            "&ouml;", "&Ouml;", "&auml;", "&Auml;", "&uuml;", "&Uuml;",
+            "", "", "&szlig;", "&aacute;", "&iacute;", "&eacute;",
+            "&ccedil;", "&Eacute;", "&#269;", "&#353;", "&#352;",
+            "&iuml;", "&euml;", "&egrave;", "&agrave;", "&igrave;",
+            "oegrave;", "&ugrave;", "&ucirc;", "&euml;", "&auml;", "&#263;",
+            "&auml;", "&#233;d", "&eacute;", "&icirc;", "&ecirc;",
+            "&eacute;", "&agrave;", "&icirc;", "&icirc;", "&Eacute;",
+            "&agrave;",
+        ];
+        return str_replace($bad_chars, $rep_chars, $rep_string);
     }
 }
