@@ -49,7 +49,6 @@ use Danmichaelo\QuiteSimpleXmlElement\QuiteSimpleXmlElement;
  * @property Carbon   $modified
  * @property Carbon   $created
  * @property array    $details_notes
- * @property string   language
  */
 class BibliographicRecord extends Record
 {
@@ -300,10 +299,6 @@ class BibliographicRecord extends Record
         switch ($ldr[6]) {
 
             case 'a':
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master
                 if (in_array($ldr[7], ['a', 'c', 'd', 'm'])) { $material = 'Book'; }
                 if (in_array($ldr[7], ['b', 'i', 's'])) { $material = 'Series'; }
                 break;
@@ -644,7 +639,6 @@ class BibliographicRecord extends Record
                         ]
                     );
                     break;
-
 
                 case 89:
                     if (!isset($this->klass)) $this->klass = [];
