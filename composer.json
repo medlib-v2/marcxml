@@ -16,10 +16,10 @@
     }
   ],
   "require": {
-    "php": ">=5.5.9",
-    "nesbot/Carbon": "1.*",
+    "php": ">=5.6.4",
+    "nesbot/Carbon": "^1.22",
     "danmichaelo/quitesimplexmlelement": "~0.2.4",
-    "illuminate/support": "5.3.*"
+    "illuminate/support": "5.4.*"
 
   },
   "replace": {
@@ -35,5 +35,9 @@
     "psr-4": {
       "Medlib\\MarcXML\\": ""
     }
-  }
+  },
+  "config": {
+    "preferred-install": "dist",
+    "sort-packages": true
+   }
 }
