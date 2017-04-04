@@ -12,7 +12,17 @@ You can install this package by using [Composer](http://getcomposer.org), runnin
 
 The next required step is to add the service provider to config/app.php :
 ```php
+'providers' => [
+    ...
     Medlib\MarcXML\Providers\ParserServiceProvider::class
+]
+```
+
+```php
+'aliases' => [
+    ...
+    'MarcXML' => Medlib\MarcXML\Facades\MarcXML::class,
+ ]
 ```
 ## Example: ##
 
